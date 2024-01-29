@@ -2,6 +2,7 @@
 import '@/styles/globals.css'
 import { Inter } from 'next/font/google'
 import { WagmiConfig } from 'wagmi'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import * as config from '@/config'
 import { Store } from '@/store/store'
@@ -15,6 +16,8 @@ import 'react-tooltip/dist/react-tooltip.css'
 import { useInitWeb3InboxClient } from '@web3inbox/widget-react'
 
 const inter = Inter({ subsets: ['latin'] })
+
+const queryClient = new QueryClient()
 
 var art = `%c
 Слава Україні
@@ -60,9 +63,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html lang="en">
             <body className={inter.className}>
                 {ready && (
-                    <WagmiConfig config={config.wagmiConfig}>
+                    <QueryClientProvider client={queryClient}>
                         <Store>{children}</Store>
-                    </WagmiConfig>
+                    </QueryClientProvider>
                 )}
             </body>
         </html>

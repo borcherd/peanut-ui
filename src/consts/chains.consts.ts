@@ -1,12 +1,11 @@
 // https://wagmi.sh/core/chains
 
-import * as wagmiChains from 'wagmi/chains'
-import { Chain } from 'wagmi'
+import * as wagmiChains from '@wagmi/core/chains'
+import { Chain } from 'viem'
 
 const milkomeda = {
     id: 2001,
     name: 'Milkomeda C1 Mainnet',
-    network: 'milkAda',
     nativeCurrency: {
         name: 'milkAda',
         symbol: 'mADA',
@@ -25,7 +24,6 @@ const milkomeda = {
 const milkomedaTestnet = {
     id: 200101,
     name: 'Milkomeda C1 Testnet',
-    network: '"milkTAda"',
     nativeCurrency: {
         name: 'milkTAda',
         symbol: 'mTAda',
@@ -45,7 +43,6 @@ const milkomedaTestnet = {
 const baseTestnet = {
     id: 84531,
     name: 'Base Goerli Testnet',
-    network: 'baseGoerli',
     nativeCurrency: {
         name: 'Ether',
         symbol: 'ETH',
@@ -64,7 +61,6 @@ const baseTestnet = {
 const taikoGrimsvotn = {
     id: 167005,
     name: 'Taiko Grimsvotn L2',
-    network: 'taikogrimsvotn',
     nativeCurrency: {
         name: 'Ether',
         symbol: 'ETH',

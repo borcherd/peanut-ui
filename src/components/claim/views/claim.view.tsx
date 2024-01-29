@@ -1,6 +1,6 @@
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { useEffect, useMemo, useState } from 'react'
-import { useAccount, useNetwork } from 'wagmi'
+import { useAccount } from 'wagmi'
 import { ethers } from 'ethers'
 import { useAtom } from 'jotai'
 import peanut from '@squirrel-labs/peanut-sdk'
@@ -16,8 +16,10 @@ import * as _consts from '../claim.consts'
 import * as utils from '@/utils'
 import * as store from '@/store'
 import * as consts from '@/consts'
+import * as config from '@/config'
 import dropdown_svg from '@/assets/dropdown.svg'
 import axios from 'axios'
+import { switchChain } from 'viem/actions'
 
 export function ClaimView({
     onNextScreen,
@@ -27,9 +29,8 @@ export function ClaimView({
     claimType,
     tokenPrice,
 }: _consts.IClaimScreenProps) {
-    const { isConnected, address } = useAccount()
+    const { isConnected, address, chain: currentChain } = useAccount()
     const { open } = useWeb3Modal()
-    const { chain: currentChain } = useNetwork()
 
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [chainDetails] = useAtom(store.defaultChainDetailsAtom)
@@ -75,7 +76,7 @@ export function ClaimView({
         if (currentChain?.id.toString() !== chainId.toString()) {
             setLoadingStates('allow network switch')
 
-            await utils.waitForPromise(switchNetwork({ chainId: Number(chainId) })).catch((error) => {
+            await utils.waitForPromise(switchChain(config.wagmiConfig, { chainId: Number(chainId) })).catch((error) => {
                 setErrorState({
                     showError: true,
                     errorMessage: 'Something went wrong while switching networks',
