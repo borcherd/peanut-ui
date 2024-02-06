@@ -22,7 +22,7 @@
         "@vercel/analytics": "^1.1.2",
         "@web3inbox/core": "^0.0.25",
         "@web3inbox/widget-react": "^0.6.25",
-        "@web3modal/wagmi": "3.5.3",
+        "@web3modal/wagmi": "3.5.7",
         "autoprefixer": "^10.4.14",
         "axios": "^1.4.0",
         "encoding": "^0.1.13",
@@ -50,8 +50,8 @@
         "tap": "^18.4.2",
         "three": "^0.157.0",
         "typescript": "5.1.6",
-        "viem": "^1.16.6",
-        "wagmi": "^1.4.4",
+        "viem": "^1.21.4",
+        "wagmi": "^1.4.13",
         "web3": "^1.7.0"
     },
     "devDependencies": {
