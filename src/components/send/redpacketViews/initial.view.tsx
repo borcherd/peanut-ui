@@ -330,6 +330,7 @@ export function SendInitialView({
                     linkDetails,
                     password,
                     numberOfLinks: Number(sendFormData.numberOfrecipients),
+                    withMFA: true,
                 })
 
                 const tempLink =
@@ -363,6 +364,13 @@ export function SendInitialView({
                     creatorAddress: address ?? '',
                     name: sendFormData.senderName ?? '',
                 })
+
+                const submitRaffleLinkResponse = await utils.fetchSubmitRaffleLink({
+                    address: address ?? '',
+                    link: getLinksFromTxResponse.link,
+                    name: sendFormData.senderName ?? '',
+                    baseUrl: 'https://red.peanut.to/packet',
+                }) //TODO: do smt with response
 
                 const txHash = signedTxsResponse[signedTxsResponse.length - 1].txHash
 

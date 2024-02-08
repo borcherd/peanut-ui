@@ -23,6 +23,7 @@ export function Packet() {
     const [leaderboardInfo, setLeaderboardInfo] = useState<interfaces.IRaffleLeaderboardEntry[] | undefined>(undefined)
     const [senderName, setSenderName] = useState<string | undefined>(undefined)
     const [recipientName, setRecipientName] = useState<string | undefined>(undefined)
+    const [requiresRaffleCaptcha, setRequiresRaffleCaptcha] = useState<boolean>(false)
 
     const handleOnNext = () => {
         const newIdx = packetScreen.idx + 1
@@ -91,6 +92,8 @@ export function Packet() {
                         })
                         setRecipientName(recipientName)
                     }
+
+                    setRequiresRaffleCaptcha(await utils.fetchRaffleRequiresCaptcha())
                 }
                 setPacketState('FOUND')
             } else {
@@ -164,6 +167,8 @@ export function Packet() {
                     setSenderName,
                     recipientName,
                     setRecipientName,
+                    requiresRaffleCaptcha,
+                    setRequiresRaffleCaptcha,
                 } as _consts.IPacketScreenProps)}
         </global_components.CardWrapper>
     )

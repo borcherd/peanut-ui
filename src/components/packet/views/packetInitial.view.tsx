@@ -40,6 +40,7 @@ export function PacketInitialView({
     setLeaderboardInfo,
     senderName,
     recipientName,
+    requiresRaffleCaptcha,
 }: _consts.IPacketScreenProps) {
     const { open } = useWeb3Modal()
     const { isConnected, address } = useAccount()
@@ -47,8 +48,7 @@ export function PacketInitialView({
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
     const [isValidAddress, setIsValidAddress] = useState(false)
     const [isEnsName, setIsEnsName] = useState<{ state: boolean; address: string }>({ state: false, address: '' })
-    const [captchaValue, setCaptchaValue] = useState<string | null>(null)
-    const [isCaptchaNeeded, setIsCaptchaNeeded] = useState(false)
+    const [captchaToken, setCaptchaToken] = useState<string | null>(null)
     const mantleCheck = utils.isMantleInUrl()
 
     const { View: lottieView, goToAndStop, play, stop } = useLottie(defaultLottieOptions, defaultLottieStyle)
@@ -74,6 +74,13 @@ export function PacketInitialView({
     const isLoading = useMemo(() => loadingStates !== 'idle', [loadingStates])
 
     const claim = async (claimFormData: { name: string | undefined }) => {
+        if (requiresRaffleCaptcha && !captchaToken) {
+            setErrorState({
+                showError: true,
+                errorMessage: 'Please complete the captcha',
+            })
+            return
+        }
         setErrorState({
             showError: false,
             errorMessage: '',
@@ -107,10 +114,18 @@ export function PacketInitialView({
                 return
             }
 
-            const raffleClaimedInfo = await utils.fetchClaimRaffleLink({
+            const getRaffleAuthResponse = await utils.fetchGetRaffleAuthorisation({
                 link: raffleLink,
                 recipientAddress: recipientAddress ?? '',
+                captchaResponse: captchaToken ?? '',
                 recipientName: claimFormData.name ?? '',
+            })
+
+            const raffleClaimedInfo = await utils.fetchClaimRaffleMfaLink({
+                link: raffleLink,
+                recipientAddress: recipientAddress ?? '',
+                depositIndex: getRaffleAuthResponse.depositIndex,
+                authorisation: getRaffleAuthResponse,
             })
 
             const leaderboardInfo = await utils.fetchLeaderboardInfo({
@@ -232,8 +247,7 @@ export function PacketInitialView({
     }
 
     const handleCaptchaChange = (value: string | null) => {
-        console.log(value)
-        setCaptchaValue(value)
+        setCaptchaToken(value)
     }
 
     return (
@@ -301,7 +315,7 @@ export function PacketInitialView({
                 </div>
             )}
 
-            {isCaptchaNeeded && (
+            {requiresRaffleCaptcha && (
                 <ReCAPTCHA sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ''} onChange={handleCaptchaChange} />
             )}
 
@@ -309,7 +323,7 @@ export function PacketInitialView({
                 type={isConnected || isValidAddress ? 'submit' : 'button'}
                 className={
                     ' block w-[90%] cursor-pointer bg-white p-5 px-2  text-2xl font-black sm:w-2/5 lg:w-1/2 ' +
-                    (isDropdownOpen || isCaptchaNeeded ? ' mt-8' : ' mt-2')
+                    (isDropdownOpen || requiresRaffleCaptcha ? ' mt-8' : ' mt-2')
                 }
                 id="cta-btn"
                 onClick={() => {

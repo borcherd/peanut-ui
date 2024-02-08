@@ -225,7 +225,38 @@ export async function fetchMakeGaslessDeposit({
         }),
     })
 
-    console.log(response)
+    if (!response.ok) {
+        throw new Error('Network response was not ok') //TODO: update error
+    }
+
+    const data = await response.json()
+
+    return data
+}
+
+export async function fetchSubmitRaffleLink({
+    address,
+    name,
+    link,
+    baseUrl,
+}: {
+    address: string
+    name?: string
+    link: string
+    baseUrl: string
+}) {
+    const response = await fetch('/api/submit-raffle-link', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            address,
+            name,
+            link,
+            baseUrl,
+        }),
+    })
 
     if (!response.ok) {
         throw new Error('Network response was not ok') //TODO: update error
@@ -244,6 +275,90 @@ export async function fetchSendDiscordNotification({ message }: { message: strin
         },
         body: JSON.stringify({
             message,
+        }),
+    })
+
+    if (!response.ok) {
+        throw new Error('Network response was not ok') //TODO: update error
+    }
+
+    const data = await response.json()
+
+    return data
+}
+
+export async function fetchRaffleRequiresCaptcha() {
+    const response = await fetch('/api/raffle-requires-captcha', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+    })
+
+    if (!response.ok) {
+        throw new Error('Network response was not ok') //TODO: update error
+    }
+
+    const data = await response.json()
+
+    return data
+}
+
+export async function fetchClaimRaffleMfaLink({
+    link,
+    recipientAddress,
+    depositIndex,
+    authorisation,
+}: {
+    link: string
+    recipientAddress: string
+    depositIndex: number
+    authorisation: string
+}) {
+    const response = await fetch('/api/claim-raffle-mfa-link', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            link,
+            recipientAddress,
+            depositIndex,
+            authorisation,
+        }),
+    })
+
+    if (!response.ok) {
+        throw new Error('Network response was not ok') //TODO: update error
+    }
+
+    const data = await response.json()
+
+    return data
+}
+
+export async function fetchGetRaffleAuthorisation({
+    link,
+    recipientAddress,
+    captchaResponse,
+    recipientName,
+}: {
+    link: string
+    recipientAddress: string
+    captchaResponse: string
+    recipientName: string
+}) {
+    const response = await fetch('/api/get-raffle-authorisation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            link,
+            recipientAddress,
+            captchaResponse,
+            recipientName,
         }),
     })
 

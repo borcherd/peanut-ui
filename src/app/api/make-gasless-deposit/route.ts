@@ -11,9 +11,8 @@ export async function POST(request: NextRequest) {
             uintAmount: ethers.BigNumber.from(body.payload.uintAmount).toString(),
             validAfter: ethers.BigNumber.from(body.payload.validAfter).toString(),
             validBefore: ethers.BigNumber.from(body.payload.validBefore).toString(),
-        }
+        } //TODO: fix in SDK
 
-        toggleVerbose(true)
         const makeDepositGaslessResponse = await makeDepositGasless({
             APIKey: APIKey,
             payload: payload,
@@ -32,5 +31,3 @@ export async function POST(request: NextRequest) {
         return new Response('Internal Server Error', { status: 500 })
     }
 }
-
-//NOT OK

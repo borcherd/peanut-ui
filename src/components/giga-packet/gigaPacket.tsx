@@ -340,6 +340,7 @@ export function GigaPacket() {
                             linkDetails: linkDetails,
                             password: peanutPassword,
                             numberOfLinks: index != quotient ? _consts.MAX_TRANSACTIONS_PER_BLOCK : remainder,
+                            withMFA: true,
                         })
 
                         preparedTransactions.push(prepTx)
@@ -412,23 +413,28 @@ export function GigaPacket() {
 
                     const linkDetails = {
                         chainId: _consts.MANTLE_CHAIN_ID,
-                        tokenAmount: 0,
+                        tokenAmount: Number(tokenAmountPerSlot * numberofLinks),
                         tokenAddress: token.tokenAddress,
-                        baseUrl: 'https://red.peanut.to/packet',
-                        trackId: 'mantle',
+                        baseUrl,
+                        trackId,
                         tokenDecimals: tokenDecimals,
                         tokenType: tokenType,
                     }
 
-                    const getLinkFromTxResponse = await getRaffleLinkFromTx({
+                    const getLinkFromTxResponse = await utils.fetchGetRaffleLinkFromTx({
                         password: peanutPassword,
                         txHash: hash,
                         linkDetails: linkDetails,
                         creatorAddress: address ?? '',
-                        APIKey: process.env.PEANUT_API_KEY ?? '',
                         numberOfLinks: numberofLinks,
                         provider: signer.provider,
                     })
+
+                    const submitRaffleLinkResponse = await utils.fetchSubmitRaffleLink({
+                        address: address ?? '',
+                        link: getLinkFromTxResponse.link,
+                        baseUrl,
+                    }) //TODO: do smt with response
 
                     links.push(getLinkFromTxResponse.link)
 
