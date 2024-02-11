@@ -723,7 +723,7 @@ export function GigaPacket() {
         <>
             <global_components.CardWrapper redPacket>
                 <div className=" mt-10 flex w-full flex-col items-center gap-2 text-center">
-                    <h2 className="title-font bold my-0 text-2xl lg:text-4xl">Create a Mega Red Packet</h2>
+                    <h2 className="title-font bold my-0 text-2xl lg:text-4xl">DO NOT USE DO NOT USE</h2>
                     <div className="my-0 w-4/5 font-normal">
                         This is a form for specifically creating red packets with more than 250 slots. Only possible on
                         mantle.
