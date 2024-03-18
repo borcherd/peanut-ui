@@ -9,6 +9,13 @@ export interface ISendFormData {
     bulkAmount: number | undefined
     numberOfrecipients: string | undefined
     senderName: string | undefined
+    raffleOptions: {
+        withMFA: boolean
+        withCaptcha: boolean
+        withSignedMessage: boolean
+        withWeb3Email: boolean
+        withENS: boolean
+    }
 }
 
 export interface ITokenListItem {

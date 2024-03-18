@@ -21,9 +21,11 @@ import * as utils from '@/utils'
 import * as _utils from '../send.utils'
 import * as hooks from '@/hooks'
 import * as global_components from '@/components/global'
+import chevron from '@/assets/icons/dropdown.svg'
 
 import dropdown_svg from '@/assets/icons/dropdown.svg'
 import { isMobile } from 'react-device-detect'
+import { Tooltip } from 'react-tooltip'
 
 export function RaffleInitialView({
     onNextScreen,
@@ -58,6 +60,7 @@ export function RaffleInitialView({
     const mantleCheck = utils.isMantleInUrl()
     const verbose = true
     const [tokenBalance, setTokenBalance] = useState<number | undefined>(undefined)
+    const [showOptions, setShowOptions] = useState(false)
 
     //global states
     const [userBalances] = useAtom(store.userBalancesAtom)
@@ -75,6 +78,13 @@ export function RaffleInitialView({
             token: mantleCheck ? 'MNT' : 'ETH',
             numberOfrecipients: undefined,
             senderName: undefined,
+            raffleOptions: {
+                withMFA: true,
+                withCaptcha: true,
+                withENS: false,
+                withSignedMessage: false,
+                withWeb3Email: false,
+            },
         },
     })
     const formwatch = sendForm.watch()
@@ -384,7 +394,7 @@ export function RaffleInitialView({
                     userAddress: address ?? '',
                     linkDetails,
                     password,
-                    withMFA: true,
+                    withMFA: sendFormData.raffleOptions.withMFA,
                     numberOfLinks: Number(sendFormData.numberOfrecipients),
                 })
 
@@ -464,13 +474,13 @@ export function RaffleInitialView({
                     password: password,
                     numberOfLinks: Number(sendFormData.numberOfrecipients),
                     name: sendFormData.senderName ?? '',
-                    withMFA: true,
-                    withCaptcha: true,
+                    withMFA: sendFormData.raffleOptions.withMFA,
+                    withCaptcha: sendFormData.raffleOptions.withCaptcha,
+                    withENS: sendFormData.raffleOptions.withENS,
+                    withSignedMessage: sendFormData.raffleOptions.withSignedMessage,
+                    withWeb3Email: sendFormData.raffleOptions.withWeb3Email,
                     baseUrl: `${consts.next_proxy_url}/submit-raffle-link`,
                     APIKey: 'doesnt-matter',
-                    withENS: false,
-                    withSignedMessage: false,
-                    withWeb3Email: false,
                 }) // TODO: update latest values here
                 // Remove indices since they are stored on the API anyway
                 const fullCreatedURL = new URL(fullCreatedLink)
@@ -814,6 +824,213 @@ export function RaffleInitialView({
                                 />
                             </div>
                         </div>
+                    </div>
+
+                    <div className="justify-cente flex w-full flex-col items-center gap-2 font-normal">
+                        <div
+                            className="flex w-full cursor-pointer flex-row items-center justify-center gap-2"
+                            onClick={() => setShowOptions(!showOptions)}
+                        >
+                            <label>show options</label>
+                            <img
+                                src={chevron.src}
+                                style={{
+                                    transform: !showOptions ? 'scaleY(-1)' : 'none',
+                                    transition: 'transform 0.3s ease-in-out',
+                                }}
+                                alt=""
+                                className="h-6"
+                            />
+                        </div>
+
+                        <Transition
+                            show={showOptions}
+                            className="duration-250 overflow-hidden transition-all"
+                            enterFrom="transform scale-100 opacity-100 max-h-0"
+                            enterTo="transform scale-100 opacity-100 max-h-[150px]"
+                            leaveFrom="transform scale-100 opacity-100 max-h-[150px]"
+                            leaveTo="transform scale-100 opacity-100 max-h-0"
+                        >
+                            <div className=" flex w-full flex-col items-start justify-center gap-1 ">
+                                <div className="flex flex-row items-center justify-center gap-1">
+                                    <input
+                                        {...sendForm.register('raffleOptions.withMFA')}
+                                        className="m-0 h-5 rounded-none p-0 accent-black"
+                                        type="checkbox"
+                                    />
+                                    <label>with MFA</label>
+                                    <svg
+                                        data-tooltip-id="MFATip"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className=" h-5 w-5 cursor-pointer text-gray-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                    <Tooltip
+                                        style={{
+                                            backgroundColor: 'black',
+                                            borderRadius: '0px',
+                                            border: '2px solid black',
+                                        }}
+                                        id="MFATip"
+                                        place="top"
+                                        className="max-w-[90%] "
+                                    >
+                                        This option enables advanced MFA which includes walletaddress and IP
+                                        verification.
+                                    </Tooltip>
+                                </div>
+                                <div className="flex flex-row items-center justify-center gap-1">
+                                    <input
+                                        {...sendForm.register('raffleOptions.withCaptcha')}
+                                        className="m-0  h-5 rounded-none p-0 accent-black"
+                                        type="checkbox"
+                                    />
+                                    <label>with captcha</label>
+                                    <svg
+                                        data-tooltip-id="CaptchaTip"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-5 w-5 cursor-pointer text-gray-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                    <Tooltip
+                                        style={{
+                                            backgroundColor: 'black',
+                                            borderRadius: '0px',
+                                            border: '2px solid black',
+                                        }}
+                                        id="CaptchaTip"
+                                        place="top"
+                                        className="max-w-[90%] "
+                                    >
+                                        This option enables verification via captcha.
+                                    </Tooltip>
+                                </div>
+                                <div className="flex flex-row items-center justify-center gap-1">
+                                    <input
+                                        {...sendForm.register('raffleOptions.withENS')}
+                                        className="m-0 h-5 rounded-none p-0 accent-black"
+                                        type="checkbox"
+                                    />
+                                    <label> with ENS</label>
+                                    <svg
+                                        data-tooltip-id="ENSTip"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className=" h-5 w-5 cursor-pointer text-gray-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                    <Tooltip
+                                        style={{
+                                            backgroundColor: 'black',
+                                            borderRadius: '0px',
+                                            border: '2px solid black',
+                                        }}
+                                        id="ENSTip"
+                                        place="top"
+                                        className="max-w-[90%] "
+                                    >
+                                        This option restricts the user to claim to an ENS name only.
+                                    </Tooltip>
+                                </div>
+                                <div className="flex flex-row items-center justify-center gap-1">
+                                    <input
+                                        {...sendForm.register('raffleOptions.withSignedMessage')}
+                                        className="m-0 h-5 rounded-none p-0 accent-black"
+                                        type="checkbox"
+                                    />
+                                    <label> with signed message</label>
+                                    <svg
+                                        data-tooltip-id="SignedMessageTip"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className=" h-5 w-5 cursor-pointer text-gray-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                    <Tooltip
+                                        style={{
+                                            backgroundColor: 'black',
+                                            borderRadius: '0px',
+                                            border: '2px solid black',
+                                        }}
+                                        id="SignedMessageTip"
+                                        place="top"
+                                        className="max-w-[90%] "
+                                    >
+                                        This option enables verification via signed message. When checked, the user will
+                                        have to sign a message to verify the ownership of connected the wallet.
+                                    </Tooltip>
+                                </div>
+                                <div className="flex flex-row items-center justify-center gap-1">
+                                    <input
+                                        {...sendForm.register('raffleOptions.withWeb3Email')}
+                                        className="m-0 h-5 rounded-none p-0 accent-black"
+                                        type="checkbox"
+                                    />
+                                    <label> with web3email</label>
+                                    <svg
+                                        data-tooltip-id="web3EmailTip"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-5 w-5 cursor-pointer text-gray-500"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                        />
+                                    </svg>
+                                    <Tooltip
+                                        style={{
+                                            backgroundColor: 'black',
+                                            borderRadius: '0px',
+                                            border: '2px solid black',
+                                        }}
+                                        id="web3EmailTip"
+                                        place="top"
+                                        className="max-w-[90%] rounded-none"
+                                    >
+                                        This option restricts the user to only claim to a web3email wallet.
+                                    </Tooltip>
+                                </div>
+                            </div>
+                        </Transition>
                     </div>
                     <div
                         className={
