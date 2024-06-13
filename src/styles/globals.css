@@ -23,7 +23,7 @@ input::-webkit-inner-spin-button {
     margin: 0;
 }
 
-Firefox input[type='number'] {
+input[type='number'] {
     appearance: textfield;
     -moz-appearance: textfield;
 }
@@ -92,4 +92,105 @@ Firefox input[type='number'] {
     background-clip: text;
     color: transparent; /* Make the text color transparent */
     animation: slide 3s linear infinite; /* Animation named 'slide', adjust timing as needed */
+}
+
+@keyframes loaderDots {
+    0% {
+        opacity: 1;
+    }
+    50%,
+    100% {
+        opacity: 0.15;
+    }
+}
+
+@keyframes colorPulse {
+    0%,
+    100% {
+        backgroundcolor: #f2f3f4;
+        boxshadow: 0 0 0px 0px color1;
+    }
+    50% {
+        backgroundcolor: #dadedf;
+        boxshadow: 0 0 0px 15px color2;
+    }
+}
+
+@keyframes textCycle {
+    0%,
+    25% {
+        opacity: 1;
+    }
+    50%,
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes bgMove {
+    0%,
+    100% {
+        backgroundposition: 0% 50%;
+    }
+    50% {
+        backgroundposition: 100% 50%;
+    }
+}
+
+@keyframes pop {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.5);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.colorPulse {
+    animation: colorPulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.textCycle {
+    animation: textCycle 8s steps(4, jump-none) infinite;
+}
+
+.bgMove {
+    animation: bgMove 15s ease infinite;
+}
+
+.pop {
+    animation: pop 0.6s ease-out forwards;
+}
+
+@keyframes confetti {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.confetti-piece {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-size: cover;
+    animation: confetti 5s linear infinite;
+}
+
+.confetti-container {
+    position: relative;
+    width: 100%;
+    height: 0;
+    overflow: visible;
+    pointer-events: none;
 }

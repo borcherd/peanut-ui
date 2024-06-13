@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 import * as assets from '@/assets'
 import * as chain_logos from '@/assets/chains'
-import { MarqueeWrapper } from '../Global/MarqueeWrapper'
+import { MarqueeWrapper } from '../../Global/MarqueeWrapper'
 import { Disclosure } from '@headlessui/react'
 
 const logoCloudLogos = [
@@ -161,7 +161,7 @@ const defaultLottieOptions = {
     },
 }
 
-export function Welcome() {
+export function WelcomeSDK() {
     const [openedFaq, setOpenedFaq] = useState<number | null>(null)
 
     useEffect(() => {
@@ -220,7 +220,7 @@ export function Welcome() {
                             rel="noopener noreferrer"
                             className="text-h4 underline"
                         >
-                            Integrate →
+                            Docs →
                         </a>
                     </div>
 
@@ -538,4 +538,4 @@ export function Welcome() {
     )
 }
 
-export default Welcome
+export default WelcomeSDK
