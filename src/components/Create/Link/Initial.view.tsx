@@ -243,11 +243,11 @@ export const CreateLinkInitialView = ({
                             >
                                 <div className="flex w-full flex-row items-center justify-between overflow-hidden text-h7">
                                     <div className="flex flex-row items-center justify-start gap-2">
-                                        <div className="h-6 w-6 animate-colorPulse rounded-full bg-slate-700" />
+                                        <div className="animate-colorPulse h-6 w-6 rounded-full bg-slate-700" />
 
-                                        <div className="h-6 w-24 animate-colorPulse rounded-full bg-slate-700" />
+                                        <div className="animate-colorPulse h-6 w-24 rounded-full bg-slate-700" />
                                     </div>
-                                    <div className="h-6 w-24 animate-colorPulse rounded-full bg-slate-700" />
+                                    <div className="animate-colorPulse h-6 w-24 rounded-full bg-slate-700" />
                                 </div>
                             </div>
                         ))}
