@@ -70,6 +70,7 @@ export const PayRequestLink = () => {
             // Check if request link is already paid
             if (requestLinkDetails.status === 'PAID') {
                 setLinkState('ALREADY_PAID')
+                setRequestLinkData(requestLinkDetails)
                 return
             }
 
