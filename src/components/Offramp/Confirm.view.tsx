@@ -17,12 +17,17 @@ import useClaimLink from '@/components/Claim/useClaimLink'
 import Link from 'next/link'
 import { CrispButton } from '@/components/CrispChat'
 import {
+    achFeeExplainer,
+    claimLinkFeeExplainer,
     CrossChainDetails,
     IOfframpConfirmScreenProps,
     LiquidationAddress,
+    OFFRAMP_IBAN_FEE_USD,
+    OFFRAMP_NON_IBAN_FEE_USD,
     OfframpType,
     optimismChainId,
     PeanutAccount,
+    sepaFeeExplainer,
     usdcAddressOptimism,
 } from '@/components/Offramp/Offramp.consts'
 import { FAQComponent } from '../Cashout/Components/Faq.comp'
@@ -67,6 +72,40 @@ export const OfframpConfirmView = ({
 
     //////////////////////
     // state and context vars for claim link offramp
+
+    //////////////////////
+    // utility JSX vars
+
+    // type: 'iban' or other
+    // TODO: standardize this type
+    let accountType = user?.accounts.find((account) => account.account_identifier === offrampForm.recipient)?.account_type
+
+    let fee  = 0;
+
+    let feeExplainer = ''
+    if (offrampType == OfframpType.CASHOUT) {
+        fee = accountType === 'iban' ? OFFRAMP_IBAN_FEE_USD : OFFRAMP_NON_IBAN_FEE_USD
+        feeExplainer = accountType === 'iban' ? sepaFeeExplainer + ' ' + achFeeExplainer: achFeeExplainer + ' ' + sepaFeeExplainer
+    } else {
+        // other types of offramp (eg. CLAIM link) do not have a fee
+        if (offrampType == OfframpType.CLAIM) {
+            feeExplainer = claimLinkFeeExplainer
+        }
+    }
+
+    let amount: number = 0
+
+    if (offrampType == OfframpType.CASHOUT) {
+        if (accountType == 'iban') {
+            amount = parseFloat(usdValue ?? tokenValue ?? '') - fee
+        } else {
+            amount = parseFloat(usdValue ?? '') - fee
+        }
+    } else if (offrampType == OfframpType.CLAIM && tokenPrice && claimLinkData) {
+        amount = tokenPrice * parseFloat(claimLinkData.tokenAmount) - fee
+    }
+
+    const amountReceived = utils.formatTokenAmount(amount)
 
     //////////////////////
     // functions w/ shared functionality across all offramp types
@@ -636,41 +675,14 @@ export const OfframpConfirmView = ({
                                 <label className="font-bold">Fee</label>
                             </div>
                             <span className="flex flex-row items-center justify-center gap-1 text-center text-sm font-normal leading-4">
-                                {user?.accounts.find((account) => account.account_identifier === offrampForm.recipient)
-                                    ?.account_type === 'iban'
-                                    ? '$1'
-                                    : '$0.50'}
+                                ${fee}
                                 <MoreInfo
-                                    text={
-                                        user?.accounts.find(
-                                            (account) => account.account_identifier === offrampForm.recipient
-                                        )?.account_type === 'iban'
-                                            ? 'For SEPA transactions a fee of $1 is charged. For ACH transactions a fee of $0.50 is charged.'
-                                            : 'For ACH transactions a fee of $0.50 is charged. For SEPA transactions a fee of $1 is charged.'
-                                    }
+                                    text={feeExplainer}
                                 />
                             </span>
                         </div>
 
                         <div className="flex w-full flex-row items-center justify-between gap-1 px-2 text-h8 text-gray-1">
-                            {offrampType == OfframpType.CLAIM && (
-                                <>
-                                    <div className="flex w-max  flex-row items-center justify-center gap-1">
-                                        <Icon name={'transfer'} className="h-4 fill-gray-1" />
-                                        <label className="font-bold">Total</label>
-                                    </div>
-                                    <span className="flex flex-row items-center justify-center gap-1 text-center text-sm font-normal leading-4">
-                                        $
-                                        {tokenPrice &&
-                                            claimLinkData &&
-                                            utils.formatTokenAmount(
-                                                tokenPrice * parseFloat(claimLinkData.tokenAmount)
-                                            )}{' '}
-                                        <MoreInfo text={'Woop Woop free offramp!'} />
-                                    </span>
-                                </>
-                            )}
-
                             <div className="flex w-max  flex-row items-center justify-center gap-1">
                                 {offrampType == OfframpType.CLAIM && (
                                     <Icon name={'transfer'} className="h-4 fill-gray-1" />
@@ -679,31 +691,9 @@ export const OfframpConfirmView = ({
                             </div>
 
                             <span className="flex flex-row items-center justify-center gap-1 text-center text-sm font-normal leading-4">
-                                $
-                                {user?.accounts.find((account) => account.account_identifier === offrampForm.recipient)
-                                    ?.account_type === 'iban'
-                                    ? offrampType == OfframpType.CASHOUT
-                                        ? utils.formatTokenAmount(parseFloat(usdValue ?? tokenValue ?? '') - 1)
-                                        : tokenPrice &&
-                                          claimLinkData &&
-                                          utils.formatTokenAmount(
-                                              tokenPrice * parseFloat(claimLinkData.tokenAmount) - 1
-                                          )
-                                    : offrampType == OfframpType.CASHOUT
-                                      ? utils.formatTokenAmount(parseFloat(usdValue ?? '') - 0.5)
-                                      : tokenPrice &&
-                                        claimLinkData &&
-                                        utils.formatTokenAmount(
-                                            tokenPrice * parseFloat(claimLinkData.tokenAmount) - 0.5
-                                        )}
+                                $ {amountReceived}
                                 <MoreInfo
-                                    text={
-                                        user?.accounts.find(
-                                            (account) => account.account_identifier === offrampForm.recipient
-                                        )?.account_type === 'iban'
-                                            ? 'For SEPA transactions a fee of $1 is charged. For ACH transactions a fee of $0.50 is charged. This will be deducted of the amount you will receive.'
-                                            : 'For ACH transactions a fee of $0.50 is charged. For SEPA transactions a fee of $1 is charged. This will be deducted of the amount you will receive.'
-                                    }
+                                    text={feeExplainer + ' This will be deducted of the amount you will receive.'}
                                 />
                             </span>
                         </div>
