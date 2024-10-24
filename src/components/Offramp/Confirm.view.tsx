@@ -837,8 +837,8 @@ export const OfframpConfirmView = ({
                 )}
                 {showRefund && (
                     <Link href={createdLink ?? ''} className=" text-h8 font-normal ">
-                        <Icon name="warning" className="-mt-0.5" /> Something went wrong while trying to cashout. Click
-                        here to reclaim the link to your wallet.
+                        <Icon name="warning" className="-mt-0.5" /> Something went wrong while trying to cashout.
+                        Contact Support or try again later.
                     </Link>
                 )}
             </div>
