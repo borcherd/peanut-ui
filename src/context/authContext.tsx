@@ -15,6 +15,8 @@ interface AuthContextType {
     updateUserName: (username: string) => Promise<void>
     submitProfilePhoto: (file: File) => Promise<void>
     updateBridgeCustomerId: (bridgeCustomerId: string) => Promise<void>
+    registerUserWithPasskey: (username: string) => Promise<void>
+    loginUserWithPasskey: (username: string) => Promise<void>
     addAccount: ({
         accountIdentifier,
         accountType,
@@ -38,7 +40,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // TODO: address here should be fetched from the walletContext
     // TODO: all mentions of wallet in components should pull from that address
     const { address } = useAccount()
-    const { signMessageAsync } = useSignMessage()
 
     const { address: kernelClientAddress, isKernelClientReady, handleLogin } = useZeroDev()
 
@@ -62,12 +63,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [user])
 
+    // TODO: this needs to be moved elsewhere (i.e. possible walletContext), was
+    // here for testing - POSSIBLY be removed bc the order is reversed:
+    // you first login w/ passkeys, so flow below would never happen
+    useEffect(() => {
+        if (kernelClientAddress != null && isKernelClientReady) {
+            authAndFetchUser(kernelClientAddress)
+        }
+    }, [kernelClientAddress, isKernelClientReady])
+
     const registerUserWithPasskey = async (username: string) => {
         //  validatiion of @handle has happened before this function
-        await handleLogin(username) //  TODO: replace this with handleRegister
+        const kernelClient = await handleLogin(username) //  TODO: replace this with handleRegister
         // TODO: case of failure on register
+    }
 
+    const loginUserWithPasskey = async (username: string) => {
+        //  validatiion of @handle has happened before this function
+        const kernelClient = await handleLogin(username)
+        // TODO: case of failure on login
+    }
 
+    const authAndFetchUser = async (address: string) => {
+        await authUser(address)
+        await fetchUser()
+    }
+
+    const authUser = async (address: string) => {
         const userIdResponse = await fetch('/api/peanut/user/get-user-id', {
             method: 'POST',
             headers: {
@@ -80,14 +102,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const response = await userIdResponse.json()
 
-        const siwemsg = utils.createSiweMessage({
-            address: address ?? '',
-            statement: `Sign in to peanut.to. This is your unique user identifier! ${response.userId}`,
-        })
+        const message = 'CHANGE THIS STRING WITH A MORE ROBUST THAT INCLUDES USER_ID'
 
-        const signature = await signMessageAsync({
-            message: siwemsg,
-        })
+        const signature = await signMessage(message)
 
         await fetch('/api/peanut/user/get-jwt-token', {
             method: 'POST',
@@ -96,29 +113,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             },
             body: JSON.stringify({
                 signature: signature,
-                message: siwemsg,
+                message: message,
             }),
         })
-
-
-        // TODO: handle case where they try to register w/ pre-registered passkey 
     }
-
 
     // TODO: document better
     // used after register too (there is a login event then too)
     const afterLoginUserSetup = async (): Promise<undefined> => {
         // set isAuthed
         setIsAuthed(true)
-
-        //TODO: REMOVE THIS - ONLY FOR TESTING
-        await handleLogin('hey2')
-
-        // // fetch user wallets
-        // // set PW as active wallet
-        // setupWalletsAfterLogin()
-
-
     }
 
 
@@ -356,6 +360,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 fetchUser,
                 updateUserName,
                 submitProfilePhoto,
+                loginUserWithPasskey,
+                registerUserWithPasskey,
                 addAccount,
                 isFetchingUser,
                 logoutUser,

@@ -48,8 +48,9 @@ interface ZeroDevContextType {
   setIsLoggingIn: (loggingIn: boolean) => void
   isSendingUserOp: boolean
   setIsSendingUserOp: (sendingUserOp: boolean) => void
-  handleRegister: (handle: string) => Promise<AppSmartAccountClient>
-  handleLogin: (handle: string) => Promise<void>
+  handleRegister: (username: string) => Promise<AppSmartAccountClient>
+  handleLogin: (username: string) => Promise<AppSmartAccountClient>
+  signMessage: (message: any) => Promise<string>
   handleSendUserOpEncoded: (
     {
       to,
@@ -146,7 +147,6 @@ export const ZeroDevProvider = ({ children }: { children: ReactNode }) => {
     setKernelClient(kernelClient)
     setAddress(kernelClient.account!.address)
     setIsKernelClientReady(true)
-
     return kernelClient
   }
 
@@ -183,7 +183,7 @@ export const ZeroDevProvider = ({ children }: { children: ReactNode }) => {
 
   ////// Login functions
   //
-  const handleLogin = async (handle: string) => {
+  const handleLogin = async (handle: string): Promise<AppSmartAccountClient | undefined> => {
     setIsLoggingIn(true)
     try {
 
@@ -202,19 +202,30 @@ export const ZeroDevProvider = ({ children }: { children: ReactNode }) => {
         validatorContractVersion: PasskeyValidatorContractVersion.V0_0_2
       })
 
-      await createKernelClient(passkeyValidator)
+      const client = await createKernelClient(passkeyValidator)
+
+      setIsLoggingIn(false)
+  
+      return client
 
     } catch (e) {
       console.error('Error logging in', e)
       toast.error('Error logging in. Please try again.')
     } finally {
       setIsLoggingIn(false)
+      return undefined
     }
   }
 
 
   ////// UserOp functions
   //
+
+  const signMessage = async (message: any) => {
+    return  kernelClient!.account!.signMessage({
+      message
+    })
+  }
 
   // TODO: better docstrings
   // used when data is already encoded from Peanut
@@ -321,6 +332,7 @@ export const ZeroDevProvider = ({ children }: { children: ReactNode }) => {
         isSendingUserOp, setIsSendingUserOp,
         handleRegister,
         handleLogin,
+        signMessage,
         handleSendUserOpEncoded,
         handleSendUserOpNotEncoded,
         address

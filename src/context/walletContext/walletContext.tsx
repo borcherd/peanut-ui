@@ -22,9 +22,9 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined)
 
 // TODO: change description
 /**
- * Context provider to manage user authentication and profile interactions.
- * It handles fetching the user profile, updating user details (e.g., username, profile photo),
- * adding accounts and logging out. It also provides hooks for child components to access user data and auth-related functions.
+ * 
+ * 
+ * 
  */
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
     ////// ZeroDev props
@@ -40,39 +40,18 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
     const [selectedWallet, setSelectedWallet] = useState<interfaces.IWallet | undefined>(undefined)  // TODO: this is the var that should be exposed for the app to consume, instead of const { address } = useAccount() anywhere
 
     ////// Wallets
-    const { data: wallets } = useQuery({
-        queryKey: ["wallets", user?.user.userId, kernelClientAddress, wagmiAddress],
+    const { data: wallets } = useQuery<interfaces.IWallet[]>({
+        queryKey: ["wallets", user?.user.userId],
         queryFn: async () => {
-            /**
-             * TODO: fetch wallets from backend
-             * TODO: 2: Remove fetch & pass user?.account ?
-            */
-            const localPasskeys = PasskeyStorage.list()
-            // const walletsResponse = await fetch('/api/peanut/user/get-wallets')
-            // if (walletsResponse.ok) {
-            //     // receive in backend format
-            //     const { dbWallets }: { dbWallets: interfaces.IDBWallet[] } = await walletsResponse.json()
-            //     // manipulate to frontend format (add connected attribute)
-            //     const wallets: interfaces.IWallet[] = dbWallets.map((dbWallet: interfaces.IDBWallet) => ({
-            //         ...dbWallet,
-            //         connected: false    // this property will be processed into accurate values later in the flow
-            //     }))
-            // }
-            return [
-                // { 
-                //     walletProviderType: interfaces.WalletProviderType.BYOW,
-                //     protocolType: interfaces.WalletProtocolType.EVM,
-                //     connected: false,
-                //     address: '0x7D4c7063E003CeB8B9413f63569e7AB968AF3714'
-                // },
-                ...localPasskeys.map(({ handle, account }) => ({
-                    walletProviderType: interfaces.WalletProviderType.PEANUT,
-                    protocolType: interfaces.WalletProtocolType.EVM,
-                    connected: false,
-                    address: account,
-                    handle
-                }))
-            ]
+            const processedWallets = user?.accounts.filter(
+                account => Object.values(interfaces.WalletProviderType).includes(account.account_type)
+            ).map(account=> ({
+                walletProviderType: account.account_type,
+                protocolType: account.chain,
+                address: account.account_identifier,
+                connected: false
+            }))
+            return processedWallets ? processedWallets : []
         }
     })
 
