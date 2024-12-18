@@ -15,6 +15,7 @@ import Loading from '@/components/Global/Loading'
 import { validate } from 'multicoin-address-validator'
 import { useAccount } from 'wagmi'
 import { CrispButton } from '@/components/CrispChat'
+import { validateEnsName } from '@/utils/general.utils'
 
 export const CreateLinkInitialView = ({
     onNext,
@@ -46,7 +47,7 @@ export const CreateLinkInitialView = ({
             return 'direct'
         }
         //ENS check
-        else if (value.endsWith('.eth')) {
+        else if (validateEnsName(value)) {
             return 'direct'
         } else if (validate(value, 'sol')) {
             setErrorState({
@@ -115,7 +116,7 @@ export const CreateLinkInitialView = ({
                     break
                 case 'direct':
                     setCreateType('direct')
-                    if (inputValue.endsWith('.eth')) {
+                    if (validateEnsName(inputValue)) {
                         const _address = await utils.resolveFromEnsName(inputValue)
                         if (_address) setRecipient({ name: inputValue, address: _address })
                         else {

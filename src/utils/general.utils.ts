@@ -18,8 +18,12 @@ export const shortenAddressLong = (address: string, chars?: number): string => {
 }
 
 export const printableAddress = (address: string): string => {
-    if (address.endsWith('.eth')) return address
+    if (validateEnsName(address)) return address
     return shortenAddressLong(address)
+}
+
+export const validateEnsName = (ensName: string): boolean => {
+    return /(?:^|[^a-zA-Z0-9-_.])(([^\s.]{1,63}\.)+[^\s.]{2,63})/.test(ensName)
 }
 
 const shortenHash = (address: string) => {
@@ -289,10 +293,13 @@ const isMantleInUrl = (): boolean => {
 }
 
 export async function resolveFromEnsName(ensName: string): Promise<string | undefined> {
-    const provider = await peanut.getDefaultProvider('1')
-    const x = await provider.resolveName(ensName)
+    const records = await JustaName.init().subnames.getRecords({
+        ens: ensName,
+        chainId: 1,
+        providerUrl: 'https://mainnet.infura.io/v3/' + process.env['NEXT_PUBLIC_INFURA_API_KEY'],
+    })
 
-    return x ? x : undefined
+    return records?.records?.coins?.find((coin) => coin.id === 60)?.value
 }
 
 function generateSafeUrl({ currentUrl, chainId }: { currentUrl: string; chainId: number }) {
@@ -884,6 +891,7 @@ function getIconName(type: string) {
 
 import { SiweMessage } from 'siwe'
 import { IRequestLinkData } from '@/components/Request/Pay/Pay.consts'
+import { JustaName } from '@justaname.id/sdk'
 
 export const createSiweMessage = ({ address, statement }: { address: string; statement: string }) => {
     const message = new SiweMessage({
