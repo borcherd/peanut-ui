@@ -3,7 +3,9 @@ import { sortCrossChainDetails } from '@/components/Claim/Claim.utils'
 import useClaimLink from '@/components/Claim/useClaimLink'
 import { useCreateLink } from '@/components/Create/useCreateLink'
 import { CrispButton } from '@/components/CrispChat'
+import FeeDescription from '@/components/Global/FeeDescription'
 import Icon from '@/components/Global/Icon'
+import InfoRow from '@/components/Global/InfoRow'
 import { GlobalKYCComponent } from '@/components/Global/KYCComponent'
 import { GlobaLinkAccountComponent } from '@/components/Global/LinkAccountComponent'
 import Loading from '@/components/Global/Loading'
@@ -17,7 +19,7 @@ import { getSquidTokenAddress } from '@/utils/token.utils'
 import peanut, { getLatestContractVersion, getLinkDetails } from '@squirrel-labs/peanut-sdk'
 import { useSteps } from 'chakra-ui-steps'
 import Link from 'next/link'
-import { useCallback, useContext, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 
 import {
     CrossChainDetails,
@@ -29,7 +31,6 @@ import {
     usdcAddressOptimism,
 } from '@/components/Offramp/Offramp.consts'
 import { FAQComponent } from '../Cashout/Components/Faq.comp'
-import { checkTransactionStatus } from '../utils/utils'
 import PromoCodeChecker from './PromoCodeChecker'
 
 export const OfframpConfirmView = ({
@@ -53,6 +54,7 @@ export const OfframpConfirmView = ({
     crossChainDetails, // available on link claim offramps
     appliedPromoCode,
     onPromoCodeApplied,
+    estimatedGasCost,
 }: IOfframpConfirmScreenProps) => {
     //////////////////////
     // state and context vars w/ shared functionality across all offramp types
@@ -64,6 +66,12 @@ export const OfframpConfirmView = ({
     const { setLoadingState, loadingState, isLoading } = useContext(context.loadingStateContext)
     const { claimLink, claimLinkXchain } = useClaimLink()
     const { fetchUser, user } = useAuth()
+
+    const accountType = user?.accounts?.find(
+        (account) =>
+            account?.account_identifier?.replaceAll(/\s/g, '').toLowerCase() ===
+            offrampForm.recipient?.replaceAll(/\s/g, '').toLowerCase()
+    )?.account_type
 
     //////////////////////
     // state and context vars for cashout offramp
@@ -646,6 +654,53 @@ export const OfframpConfirmView = ({
         }
     }
 
+    const calculateEstimatedFee = (
+        estimatedGasCost: string | undefined,
+        hasPromoCode: boolean,
+        accountType: string | undefined,
+        hasCrossChain: boolean
+    ): number => {
+        const baseGasCost = parseFloat(estimatedGasCost ?? '0')
+        if (hasPromoCode) return baseGasCost
+
+        const accountFee = accountType === 'iban' ? 1 : 0.5
+        const crossChainFee = hasCrossChain ? baseGasCost * 0.1 : 0
+        return baseGasCost + accountFee + crossChainFee
+    }
+
+    // check if fee exceeds withdraw amount and update error state
+    useEffect(() => {
+        const totalFees = calculateEstimatedFee(estimatedGasCost, !!appliedPromoCode, accountType, !!crossChainDetails)
+
+        const amount =
+            offrampType == OfframpType.CASHOUT
+                ? parseFloat(usdValue ?? '0')
+                : tokenPrice && claimLinkData
+                  ? tokenPrice * parseFloat(claimLinkData.tokenAmount)
+                  : 0
+
+        if (!isNaN(amount) && !isNaN(totalFees) && amount <= totalFees) {
+            setErrorState({
+                showError: true,
+                errorMessage: 'Transaction fees exceed the withdrawal amount. Please try a larger amount.',
+            })
+        } else {
+            setErrorState({
+                showError: false,
+                errorMessage: '',
+            })
+        }
+    }, [
+        estimatedGasCost,
+        usdValue,
+        appliedPromoCode,
+        accountType,
+        crossChainDetails,
+        offrampType,
+        tokenPrice,
+        claimLinkData,
+    ])
+
     return (
         <div className="flex w-full flex-col items-center justify-center gap-4 px-2  text-center">
             <label className="text-h4">Confirm your details</label>
@@ -738,144 +793,63 @@ export const OfframpConfirmView = ({
                             </div>
                         )}
 
-                        <div className="flex w-full flex-row items-center px-2 text-h8 text-gray-1">
-                            <div className="flex w-1/3 flex-row items-center gap-1">
-                                <Icon name={'gas'} className="h-4 fill-gray-1" />
-                                <label className="font-bold">Fee</label>
-                            </div>
-                            <div className="relative flex flex-1 items-center justify-end gap-1 text-sm font-normal">
-                                <div className="flex items-center gap-1">
-                                    {appliedPromoCode
-                                        ? '$0'
-                                        : user?.accounts.find(
-                                                (account) =>
-                                                    account.account_identifier.replaceAll(/\s/g, '').toLowerCase() ===
-                                                    offrampForm.recipient.replaceAll(/\s/g, '').toLowerCase()
-                                            )?.account_type === 'iban'
-                                          ? '$1'
-                                          : '$0.50'}
-                                    <span className="inline-flex items-center">
-                                        <MoreInfo
-                                            text={
-                                                appliedPromoCode
-                                                    ? 'Fees waived with promo code!'
-                                                    : `For ${
-                                                          user?.accounts.find(
-                                                              (account) =>
-                                                                  account.account_identifier
-                                                                      .replaceAll(/\s/g, '')
-                                                                      .toLowerCase() ===
-                                                                  offrampForm.recipient
-                                                                      .replaceAll(/\s/g, '')
-                                                                      .toLowerCase()
-                                                          )?.account_type === 'iban'
-                                                              ? 'SEPA'
-                                                              : 'ACH'
-                                                      } transactions a fee of ${
-                                                          user?.accounts.find(
-                                                              (account) =>
-                                                                  account.account_identifier
-                                                                      .replaceAll(/\s/g, '')
-                                                                      .toLowerCase() ===
-                                                                  offrampForm.recipient
-                                                                      .replaceAll(/\s/g, '')
-                                                                      .toLowerCase()
-                                                          )?.account_type === 'iban'
-                                                              ? '$1'
-                                                              : '$0.50'
-                                                      } is charged.`
-                                            }
-                                        />
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        <div className="flex w-full flex-col items-center justify-center">
+                            <InfoRow
+                                iconName="money-in"
+                                label="Expected receive"
+                                value={(() => {
+                                    const bankingFee = appliedPromoCode ? 0 : accountType === 'iban' ? 1 : 0.5
+                                    const slippage = crossChainDetails ? parseFloat(estimatedGasCost ?? '0') * 0.1 : 0
+                                    const totalFees = bankingFee + slippage
 
-                        <div className="flex w-full flex-row items-center px-2 text-h8 text-gray-1">
-                            <div className="flex w-1/3 flex-row items-center gap-1">
-                                <Icon name={'transfer'} className="h-4 fill-gray-1" />
-                                <label className="font-bold">Total</label>
-                            </div>
-                            <div className="flex flex-1 items-center justify-end gap-1 text-sm font-normal">
-                                $
-                                {offrampType === OfframpType.CASHOUT
-                                    ? utils.formatTokenAmount(parseFloat(usdValue ?? '0'))
-                                    : tokenPrice && claimLinkData
-                                      ? utils.formatTokenAmount(tokenPrice * parseFloat(claimLinkData.tokenAmount))
-                                      : ''}{' '}
-                                <MoreInfo
-                                    text={`This is the total amount before the ${
-                                        user?.accounts.find(
-                                            (account) =>
-                                                account.account_identifier.replaceAll(/\s/g, '').toLowerCase() ===
-                                                offrampForm.recipient.replaceAll(/\s/g, '').toLowerCase()
-                                        )?.account_type === 'iban'
-                                            ? '$1 SEPA'
-                                            : '$0.50 ACH'
-                                    } fee is deducted.`}
-                                />
-                            </div>
-                        </div>
+                                    const amount =
+                                        offrampType == OfframpType.CASHOUT
+                                            ? parseFloat(usdValue ?? '0')
+                                            : tokenPrice && claimLinkData
+                                              ? tokenPrice * parseFloat(claimLinkData.tokenAmount)
+                                              : 0
 
-                        <div className="flex w-full flex-row items-center justify-between px-2 text-h8 text-gray-1">
-                            <div className="flex w-max flex-row items-center gap-1">
-                                <Icon name={'transfer'} className="h-4 fill-gray-1" />
-                                <label className="font-bold">You will receive</label>
-                            </div>
-                            <div className="flex items-center justify-end gap-1 text-sm font-normal">
-                                <div className="flex items-center gap-1">
-                                    ${/* if promo code is applied, show full amount without fee deduction */}
-                                    {appliedPromoCode
-                                        ? offrampType == OfframpType.CASHOUT
-                                            ? utils.formatTokenAmount(parseFloat(usdValue ?? tokenValue ?? ''))
-                                            : tokenPrice &&
-                                              claimLinkData &&
-                                              utils.formatTokenAmount(
-                                                  tokenPrice * parseFloat(claimLinkData.tokenAmount)
-                                              )
-                                        : // if no promo code, apply fee deduction based on account type
-                                          user?.accounts.find(
-                                                (account) =>
-                                                    account.account_identifier.replaceAll(/\s/g, '').toLowerCase() ===
-                                                    offrampForm.recipient.replaceAll(/\s/g, '').toLowerCase()
-                                            )?.account_type === 'iban'
-                                          ? offrampType == OfframpType.CASHOUT
-                                              ? utils.formatTokenAmount(parseFloat(usdValue ?? tokenValue ?? '') - 1)
-                                              : tokenPrice &&
-                                                claimLinkData &&
-                                                utils.formatTokenAmount(
-                                                    tokenPrice * parseFloat(claimLinkData.tokenAmount) - 1
-                                                )
-                                          : offrampType == OfframpType.CASHOUT
-                                            ? utils.formatTokenAmount(parseFloat(usdValue ?? '') - 0.5)
-                                            : tokenPrice &&
-                                              claimLinkData &&
-                                              utils.formatTokenAmount(
-                                                  tokenPrice * parseFloat(claimLinkData.tokenAmount) - 0.5
-                                              )}
-                                    <MoreInfo
-                                        text={
-                                            appliedPromoCode
-                                                ? 'Fees waived with promo code!'
-                                                : user?.accounts.find(
-                                                        (account) =>
-                                                            account.account_identifier
-                                                                .replaceAll(/\s/g, '')
-                                                                .toLowerCase() ===
-                                                            offrampForm.recipient.replaceAll(/\s/g, '').toLowerCase()
-                                                    )?.account_type === 'iban'
-                                                  ? 'For SEPA transactions a fee of $1 is charged. For ACH transactions a fee of $0.50 is charged. This will be deducted of the amount you will receive.'
-                                                  : 'For ACH transactions a fee of $0.50 is charged. For SEPA transactions a fee of $1 is charged. This will be deducted of the amount you will receive.'
-                                        }
-                                    />
-                                </div>
-                            </div>
-                        </div>
+                                    // return 0 if fees exceed amount
+                                    return amount <= totalFees
+                                        ? '$ 0'
+                                        : `$ ${utils.formatTokenAmount(amount - totalFees)}` || '$ 0'
+                                })()}
+                                moreInfoText="Expected amount you will receive in your bank after all fees are deducted"
+                            />
 
-                        <PromoCodeChecker
-                            onPromoCodeApplied={handlePromoCodeApplied}
-                            appliedPromoCode={appliedPromoCode!}
-                        />
+                            <FeeDescription
+                                estimatedFee={calculateEstimatedFee(
+                                    estimatedGasCost,
+                                    !!appliedPromoCode,
+                                    accountType,
+                                    !!crossChainDetails
+                                ).toString()}
+                                networkFee={estimatedGasCost ?? '0'}
+                                minReceive={(() => {
+                                    const bankingFee = appliedPromoCode ? 0 : accountType === 'iban' ? 1 : 0.5
+                                    const slippage = crossChainDetails ? parseFloat(estimatedGasCost ?? '0') * 0.1 : 0
+                                    const totalFees = bankingFee + slippage
+                                    const amount = parseFloat(usdValue ?? '0')
+
+                                    // return 0 if fees exceed amount
+                                    return amount <= totalFees ? '0' : utils.formatTokenAmount(amount - totalFees)
+                                })()}
+                                maxSlippage={
+                                    crossChainDetails
+                                        ? utils.formatTokenAmount(parseFloat(estimatedGasCost ?? '0') * 0.1)
+                                        : undefined
+                                }
+                                accountType={accountType}
+                                accountTypeFee={appliedPromoCode ? '0' : accountType === 'iban' ? '1' : '0.50'}
+                                isPromoApplied={!!appliedPromoCode}
+                                loading={isLoading}
+                            />
+
+                            <PromoCodeChecker
+                                onPromoCodeApplied={handlePromoCodeApplied}
+                                appliedPromoCode={appliedPromoCode!}
+                            />
+                        </div>
                     </div>
                 </div>
             )}
@@ -896,7 +870,7 @@ export const OfframpConfirmView = ({
                             }
                         }}
                         className="btn-purple btn-xl"
-                        disabled={isLoading}
+                        disabled={isLoading || errorState.showError}
                     >
                         {isLoading ? (
                             <div className="flex w-full flex-row items-center justify-center gap-2">
